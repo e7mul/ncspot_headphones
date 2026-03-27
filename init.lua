@@ -83,6 +83,9 @@ local sleepWatcher = hs.caffeinate.watcher.new(function(event)
         cacheTimer:start()
         tap:start()
         appWatcher:start()
+        -- Bring Focus To-Do to the front
+        local focusApp = hs.application.get("com.macpomodoro")
+        if focusApp then focusApp:activate() end
         print("watchers restarted after unlock/wake")
     end
 end)

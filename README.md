@@ -1,6 +1,9 @@
-# ncspot macOS Media Key Integration
+# Hammerspoon Config
 
-Makes macOS headphone and keyboard media buttons (play/pause, next, previous) control **ncspot** instead of Apple Music.
+Hammerspoon scripts for macOS automation:
+- **ncspot media keys** — routes headphone and keyboard media buttons to ncspot instead of Apple Music
+- **Focus To-Do auto-pause** — pauses Focus To-Do timer on screen lock/sleep
+- **Focus To-Do auto-focus** — brings Focus To-Do to the front on screen unlock
 
 ## The Problem
 
@@ -25,53 +28,10 @@ Use **Hammerspoon** to intercept both channels:
 ### Steps
 
 1. Open Hammerspoon and go to **System Settings → Privacy & Security → Accessibility** and enable Hammerspoon
-2. Place the following script in `~/.hammerspoon/init.lua`:
+2. Symlink the config from this repo:
 
-```lua
-local KEY_COMMAND_MAP = {
-    PLAY = "playpause",
-    FAST = "next",
-    REWIND = "previous",
-}
-
-local handle = io.popen("id -u")
-local uid = handle:read("*l")
-handle:close()
-local ncspot_sock_path = string.format("/tmp/ncspot-%s/ncspot.sock", uid)
-
-local function ncspot_command(cmd)
-    local sh = string.format([[echo "%s" | /usr/bin/nc -U %s]], cmd, ncspot_sock_path)
-    hs.execute(sh, true)
-end
-
--- Handle keyboard media keys
-local tap = hs.eventtap.new({ hs.eventtap.event.types.systemDefined }, function(e)
-    local s = e:systemKey()
-    local cmd = KEY_COMMAND_MAP[s.key]
-    if not cmd or not s.down then
-        return false
-    end
-
-    ncspot_command(cmd)
-    return true
-end)
-tap:start()
-
--- Handle headphone button (bypasses eventtap, triggers Apple Music instead)
-local function killAppleMusic()
-    local music = hs.application.get("Music")
-    if music then
-        music:kill()
-    end
-end
-
-local appWatcher = hs.application.watcher.new(function(name, event, app)
-    if name == "Music" and event == hs.application.watcher.launched then
-        killAppleMusic()
-        ncspot_command("playpause")
-    end
-end)
-appWatcher:start()
+```bash
+ln -sf /Users/wmasarczyk/Documents/MyProjects/hammerspoon/init.lua ~/.hammerspoon/init.lua
 ```
 
 3. Click **Reload Config** from the Hammerspoon menu bar icon
